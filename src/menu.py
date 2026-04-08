@@ -4,10 +4,11 @@ Muestra el menú principal e invoca la lógica del sistema.
 """
 
 from service import (
-    create_user,
-    list_users,
-    update_user,
-    delete_user,
+    new_register,
+    list_records,
+    search_record,
+    update_record,
+    delete_record,
 )
 from integration import generate_fake_users
 
@@ -15,12 +16,13 @@ from integration import generate_fake_users
 def show_menu():
     """Bucle principal del menú interactivo."""
     options = {
-        "1": ("Crear usuario", create_user),
-        "2": ("Listar usuarios", list_users),
-        "3": ("Actualizar usuario", update_user),
-        "4": ("Eliminar usuario", delete_user),
-        "5": ("Generar usuarios de prueba (Faker)", _generate_users),
-        "0": ("Salir", None),
+        "1": ("Crear usuario",                    new_register),
+        "2": ("Listar usuarios",                  list_records),
+        "3": ("Buscar usuario",                   search_record),
+        "4": ("Actualizar usuario",               update_record),
+        "5": ("Eliminar usuario",                 delete_record),
+        "6": ("Generar usuarios de prueba (Faker)", _generate_users),
+        "0": ("Salir",                            None),
     }
 
     while True:

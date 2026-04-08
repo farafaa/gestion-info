@@ -10,7 +10,7 @@ try:
 except ImportError:
     Faker = None
 
-from service import create_user
+from service import new_register
 
 ROLES = ["admin", "editor", "usuario"]
 
@@ -18,14 +18,14 @@ ROLES = ["admin", "editor", "usuario"]
 def generate_fake_users(n: int = 5) -> list:
     """
     Genera `n` usuarios falsos usando Faker y los agrega al sistema.
-    Usa *args internamente a través de **kwargs en create_user.
+    Usa **kwargs en new_register para llamada programática.
     """
     if Faker is None:
         print("[ERROR] La librería 'faker' no está instalada.")
         print("  Ejecuta: pip install faker")
         return []
 
-    fake = Faker("es_MX")  # Nombres en español
+    fake = Faker("es_MX")
     created = []
     skipped = 0
 
@@ -33,15 +33,14 @@ def generate_fake_users(n: int = 5) -> list:
 
     for _ in range(n):
         try:
-            user = create_user(
+            user = new_register(
                 name=fake.name(),
                 email=fake.unique.email(),
                 age=random.randint(18, 65),
                 role=random.choice(ROLES),
             )
             created.append(user)
-        except ValueError as e:
-            # Email duplicado u otro error de validación: se omite
+        except ValueError:
             skipped += 1
 
     print(f"  ✓ {len(created)} creado(s), {skipped} omitido(s) por duplicados.")

@@ -1,5 +1,6 @@
 """
 service.py — Lógica de negocio (CRUD)
+Módulo 3: CRUD completo conectado a persistencia.
 Operaciones sobre la colección de usuarios en memoria + persistencia.
 """
 
@@ -26,19 +27,17 @@ def _find_by_id(users: list, user_id: str) -> dict | None:
 
 # ── CRUD ─────────────────────────────────────────────────────────────────────
 
-def create_user(*args, **kwargs) -> dict:
+def new_register(*args, **kwargs) -> dict:
     """
     Crea un nuevo usuario.
     Acepta **kwargs para poder llamarlo desde Faker o desde el menú.
     """
     if kwargs:
-        # Llamada programática (ej. desde integration.py)
         name  = kwargs.get("name", "")
         email = kwargs.get("email", "")
         age   = kwargs.get("age", 0)
         role  = kwargs.get("role", "usuario")
     else:
-        # Llamada interactiva desde el menú
         name  = input("Nombre completo: ").strip()
         email = input("Email: ").strip()
         age   = input("Edad: ").strip()
@@ -59,6 +58,7 @@ def create_user(*args, **kwargs) -> dict:
         raise ValueError("Usuario inválido, no fue guardado.")
 
     users = _get_all()
+
     # Verificar email duplicado con set comprehension
     existing_emails = {u["email"].lower() for u in users}
     if user["email"].lower() in existing_emails:
@@ -70,7 +70,7 @@ def create_user(*args, **kwargs) -> dict:
     return user
 
 
-def list_users() -> list:
+def list_records() -> list:
     """Lista todos los usuarios registrados."""
     users = _get_all()
     if not users:
@@ -87,7 +87,46 @@ def list_users() -> list:
     return users
 
 
-def update_user() -> None:
+def search_record() -> list:
+    """
+    Busca usuarios por nombre, email o rol.
+    Usa list comprehension para filtrar y lambda para ordenar resultados.
+    """
+    users = _get_all()
+    if not users:
+        print("  No hay usuarios registrados.")
+        return []
+
+    term = input("Buscar por nombre, email o rol: ").strip().lower()
+    if not term:
+        print("  Debes ingresar un término de búsqueda.")
+        return []
+
+    # List comprehension para filtrar
+    results = [
+        u for u in users
+        if term in u["name"].lower()
+        or term in u["email"].lower()
+        or term in u["role"].lower()
+    ]
+
+    if not results:
+        print(f"  No se encontraron usuarios con '{term}'.")
+        return []
+
+    # Lambda para ordenar resultados por nombre
+    results = sorted(results, key=lambda u: u["name"].lower())
+
+    print(f"\n  {len(results)} resultado(s) para '{term}':\n")
+    print(f"{'ID':<10} {'Nombre':<25} {'Email':<30} {'Edad':<6} {'Rol'}")
+    print("-" * 80)
+    for u in results:
+        print(format_user_display(u))
+
+    return results
+
+
+def update_record() -> None:
     """Actualiza nombre, edad o rol de un usuario existente."""
     users = _get_all()
     if not users:
@@ -97,7 +136,7 @@ def update_user() -> None:
     user_id = input("ID del usuario a actualizar: ").strip()
     user = _find_by_id(users, user_id)
     if not user:
-        print(f"  No se encontró usuario con ID '{user_id}'.")
+        print(f"  ✗ No se encontró usuario con ID '{user_id}'.")
         return
 
     print(f"  Editando: {user['name']} | {user['email']}")
@@ -110,7 +149,11 @@ def update_user() -> None:
     if new_name:
         user["name"] = new_name
     if new_age:
-        user["age"] = int(new_age)
+        try:
+            user["age"] = int(new_age)
+        except ValueError:
+            print("  ✗ La edad debe ser un número entero. No se actualizó.")
+            return
     if new_role:
         user["role"] = new_role
 
@@ -124,7 +167,7 @@ def update_user() -> None:
     print(f"  ✓ Usuario '{user['name']}' actualizado correctamente.")
 
 
-def delete_user() -> None:
+def delete_record() -> None:
     """Elimina un usuario por ID."""
     users = _get_all()
     if not users:
@@ -134,7 +177,7 @@ def delete_user() -> None:
     user_id = input("ID del usuario a eliminar: ").strip()
     user = _find_by_id(users, user_id)
     if not user:
-        print(f"  No se encontró usuario con ID '{user_id}'.")
+        print(f"  ✗ No se encontró usuario con ID '{user_id}'.")
         return
 
     confirm = input(f"  ¿Eliminar a '{user['name']}'? (s/n): ").strip().lower()
@@ -145,4 +188,11 @@ def delete_user() -> None:
     # Lambda para filtrar sin el usuario eliminado
     updated = list(filter(lambda u: u["id"] != user_id, users))
     _save_all(updated)
-    print(f"  ✓ Usuario '{user['name']}' eliminado.")
+    print(f"  ✓ Usuario '{user['name']}' eliminado correctamente.")
+
+
+# ── Aliases para compatibilidad con menu.py ───────────────────────────────────
+create_user  = new_register
+list_users   = list_records
+update_user  = update_record
+delete_user  = delete_record
